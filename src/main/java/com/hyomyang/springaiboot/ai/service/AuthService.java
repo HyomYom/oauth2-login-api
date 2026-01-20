@@ -12,6 +12,7 @@ import io.jsonwebtoken.Jws;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.*;
 
 @Service
@@ -22,8 +23,8 @@ public class AuthService {
     private final RefreshTokenStore refreshTokenStore;
 
     public TokenPair login(LoginRequest req){
-        // 추후 진짜 로그인으로 벼녁ㅇ
-        Long userId = 1L; //TODO: 실제로는 username/pw 검증 후 조회된 userId
+        // 추후 진짜 로그인으로 변경
+        Long userId = 1L;
         Set<String> roles = new HashSet<>(List.of("ROLE_ADMIN"));
 
         String access = tokenProvider.createAccessToken(userId, roles);
@@ -38,6 +39,14 @@ public class AuthService {
         return new TokenPair(access, refresh);
 
     }
+
+    public TokenPair loginAs(Long userId, Set<String> roles, Instant refreshExpAt, String refreshToken){
+        String accessToken = tokenProvider.createAccessToken(userId, roles);
+        Jws<Claims> jws = tokenProvider.parseToken(refreshToken);
+        String jti = tokenProvider.getJti(jws);
+        refreshTokenStore.save(userId, jti, refreshExpAt);
+        return new TokenPair(accessToken, refreshToken);
+    };
 
     public TokenPair refresh(String refreshToken){
         if(refreshToken == null || refreshToken.isBlank()){
@@ -57,9 +66,11 @@ public class AuthService {
 
         Long userId = tokenProvider.getSubject(refreshToken);
         String jti = tokenProvider.getJti(jws);
+        Instant expAt = jws.getPayload().getExpiration().toInstant();
 
         if(!refreshTokenStore.exists(userId,jti)){
             // 이미 폐기되었거나(로그아웃/rotation), 재사용 공격
+            refreshTokenStore.revokeAll(userId);
             throw new UnauthorizedException(ErrorCode.REFRESH_REVOKED_OR_REUSED);
         }
 
@@ -81,8 +92,6 @@ public class AuthService {
         );
 
         return new TokenPair(newAccess, newRefresh);
-
-
     }
 
     public void logout(String refreshToken){

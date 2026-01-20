@@ -41,4 +41,11 @@ public class InMemoryRefreshTokenStore implements RefreshTokenStore{
         store.remove(key(userId, jti));
 
     }
+
+    @Override
+    public void revokeAll(Long userId) {
+        String prefix = userId + ":";
+        store.keySet().removeIf(key -> key.startsWith(prefix));
+
+    }
 }

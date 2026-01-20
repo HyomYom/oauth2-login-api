@@ -3,6 +3,7 @@ package com.hyomyang.springaiboot.ai.controller;
 
 import com.hyomyang.springaiboot.ai.component.TokenExtractor;
 import com.hyomyang.springaiboot.ai.dto.auth.LoginRequest;
+import com.hyomyang.springaiboot.ai.dto.auth.RefreshRequest;
 import com.hyomyang.springaiboot.ai.dto.auth.TokenPair;
 import com.hyomyang.springaiboot.ai.dto.auth.TokenPairResponse;
 import com.hyomyang.springaiboot.ai.dto.response.ApiResponse;
@@ -29,16 +30,13 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<ApiResponse<TokenPairResponse>> refresh(HttpServletRequest req){
-        String refreshToken = TokenExtractor.extractBearer(req.getHeader("Authorization"));
-        var pair = authService.refresh(refreshToken);
-        return ResponseEntity.ok(ApiResponse.ok(TokenPairResponse.from(pair)));
+    public ResponseEntity<ApiResponse<TokenPairResponse>> refresh(@RequestBody RefreshRequest req){
+        return ResponseEntity.ok(ApiResponse.ok(TokenPairResponse.from(authService.refresh(req.refreshToken()))));
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<ApiResponse<Void>> logout(HttpServletRequest req){
-        String refreshToken = TokenExtractor.extractBearer(req.getHeader("Authorization"));
-        authService.logout(refreshToken);
+    public ResponseEntity<ApiResponse<Void>> logout(@RequestBody RefreshRequest req){
+        authService.logout(req.refreshToken());
         return ResponseEntity.ok(ApiResponse.ok(null));
     }
 
