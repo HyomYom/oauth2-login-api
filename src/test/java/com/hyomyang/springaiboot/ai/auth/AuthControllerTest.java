@@ -50,10 +50,8 @@ public class AuthControllerTest {
     @BeforeEach
     void setUp() {
 
-        Optional<User> byId = userRepository.findById(1L);
-        byId.orElseGet(() -> userRepository.save(new User("pagooo@naver.com", "test", "ROLE_USER")));
-
-        User user = byId.orElseGet(()-> userRepository.save(new User("pagoooo@naver.com", "test", "ROLE_USER")));
+        User user = userRepository.findById(1L)
+                .orElseGet(() -> userRepository.save(new User("pagooo@naver.com", "test", "ROLE_USER")));
 
         userId = user.getId();
     }
@@ -81,8 +79,7 @@ public class AuthControllerTest {
         RefreshRequest refreshRequest = new RefreshRequest(oldRefresh);
 
         mockMvc.perform(post("/api/auth/refresh")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(refreshRequest)))
+                        .header("Authorization", "Bearer " + oldRefresh))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.accessToken", not(isEmptyOrNullString())))
                 .andExpect(jsonPath("$.data.refreshToken", not(isEmptyOrNullString())))
@@ -92,11 +89,9 @@ public class AuthControllerTest {
     @Test
     void refresh_withReusedOldRefresh_shouldReturn401() throws Exception {
         String oldRefresh = issueAndStoreRefreshToken(userId);
-        RefreshRequest refreshRequest = new RefreshRequest(oldRefresh);
 
         String rotatedRefresh = mockMvc.perform(post("/api/auth/refresh")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(refreshRequest)))
+                        .header("Authorization", "Bearer " + oldRefresh))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.refreshToken", not(isEmptyOrNullString())))
                 .andReturn()
