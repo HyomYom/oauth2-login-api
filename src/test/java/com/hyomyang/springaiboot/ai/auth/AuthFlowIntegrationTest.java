@@ -16,9 +16,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -32,14 +30,15 @@ public class AuthFlowIntegrationTest {
     @Autowired MockMvc mockMvc;
     @Autowired ObjectMapper objectMapper;
     @Autowired UserRepository userRepository;
+    private Long userId;
 
     @BeforeEach
     void setUp() {
-        // login에서 username/password로 유저를 찾거나,
-        // getById에 쓰일 데이터가 필요하면 여기서 미리 insert
-        Optional<User> byId = userRepository.findById(1L);
-        byId.orElseGet(() -> userRepository.save(new User("pagooo@naver.com", "test", "ROLE_USER")));
 
+        User user = userRepository.findById(1L)
+                .orElseGet(() -> userRepository.save(new User("pagooo@naver.com", "test", "ROLE_USER")));
+
+        userId = user.getId();
     }
 
     @Test
@@ -59,7 +58,7 @@ public class AuthFlowIntegrationTest {
     @Test
     void refresh_rotation_shouldRejectReuse() throws Exception {
         // 1) login
-        Map<String, String> req = Map.of("username", "test", "password", "1234");
+        Map<String, Object> req = Map.of("id", userId, "role", List.of("ROLE_USER"));
         String loginsRes = mockMvc.perform(post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(req)))

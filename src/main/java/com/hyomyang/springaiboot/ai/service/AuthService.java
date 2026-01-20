@@ -24,8 +24,8 @@ public class AuthService {
 
     public TokenPair login(LoginRequest req){
         // 추후 진짜 로그인으로 변경
-        Long userId = 1L;
-        Set<String> roles = new HashSet<>(List.of("ROLE_ADMIN"));
+        Long userId = req.id();
+        Set<String> roles = req.roles();
 
         String access = tokenProvider.createAccessToken(userId, roles);
         String refresh = tokenProvider.createRefreshToken(userId);
@@ -70,7 +70,7 @@ public class AuthService {
 
         if(!refreshTokenStore.exists(userId,jti)){
             // 이미 폐기되었거나(로그아웃/rotation), 재사용 공격
-            refreshTokenStore.revokeAll(userId);
+            refreshTokenStore.revoke(userId,jti);
             throw new UnauthorizedException(ErrorCode.REFRESH_REVOKED_OR_REUSED);
         }
 
