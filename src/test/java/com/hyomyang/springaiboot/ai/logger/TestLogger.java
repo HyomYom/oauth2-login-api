@@ -9,6 +9,7 @@ import org.junit.jupiter.api.extension.TestWatcher;
 public class TestLogger implements TestWatcher {
     @Override
     public void testSuccessful(ExtensionContext context) {
+
         log.info("✅ PASSED: " + context.getDisplayName());
     }
 
