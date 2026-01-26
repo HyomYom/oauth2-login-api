@@ -2,11 +2,10 @@ package com.hyomyang.springaiboot.ai.auth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hyomyang.springaiboot.ai.domain.User;
-import com.hyomyang.springaiboot.ai.dto.auth.RefreshRequest;
 import com.hyomyang.springaiboot.ai.logger.TestLogger;
 import com.hyomyang.springaiboot.ai.repository.UserRepository;
 import com.hyomyang.springaiboot.ai.security.jwt.JwtTokenProvider;
-import com.hyomyang.springaiboot.ai.security.refresh.RefreshTokenStore;
+import com.hyomyang.springaiboot.ai.security.store.RefreshTokenStore;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,13 +14,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
-import java.util.Optional;
-import java.util.UUID;
 
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -46,40 +42,40 @@ public class AuthControllerTest {
 
 
     private Long userId;
+    private static final String TEST_DEVICE_ID = "test-device-123";
 
     @BeforeEach
     void setUp() {
 
-        User user = userRepository.findById(1L)
-                .orElseGet(() -> userRepository.save(new User("pagooo@naver.com", "test", "ROLE_USER")));
+        User user = userRepository.findByEmail("pagooo@naver.com")
+                .orElseGet(() -> userRepository.save(new User("pagooo@naver.com", "1234", "test_user","ROLE_USER", true)));
 
         userId = user.getId();
     }
 
     /**
      * 테스트용: "유효한 refreshToken"을 발급하고 store에 저장까지 해둔다.
-     * (실제 login 엔드포인트가 없어도 Day16 테스트 가능)
      */
-    private String issueAndStoreRefreshToken(Long userId) {
+    private String issueAndStoreRefreshToken(Long userId, String deviceId) throws Exception {
         String refresh = tokenProvider.createRefreshToken(userId);
 
         Jws<Claims> jws = tokenProvider.parseToken(refresh);
         String jti = tokenProvider.getJti(jws);
         Instant expAt = jws.getPayload().getExpiration().toInstant();
 
-        refreshTokenStore.save(userId, jti, expAt);
+        refreshTokenStore.saveCurrent(userId, deviceId, jti, expAt);
         return refresh;
     }
 
 
     @Test
     void refresh_shouldRotate_andReturnNewTokenPair() throws Exception {
-        String oldRefresh = issueAndStoreRefreshToken(userId);
+        String oldRefresh = issueAndStoreRefreshToken(userId, TEST_DEVICE_ID);
 
-        RefreshRequest refreshRequest = new RefreshRequest(oldRefresh);
 
         mockMvc.perform(post("/api/auth/refresh")
-                        .header("Authorization", "Bearer " + oldRefresh))
+                        .header("Authorization", "Bearer " + oldRefresh)
+                        .header("X-Device-Id", TEST_DEVICE_ID))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.accessToken", not(isEmptyOrNullString())))
                 .andExpect(jsonPath("$.data.refreshToken", not(isEmptyOrNullString())))
@@ -88,10 +84,11 @@ public class AuthControllerTest {
 
     @Test
     void refresh_withReusedOldRefresh_shouldReturn401() throws Exception {
-        String oldRefresh = issueAndStoreRefreshToken(userId);
+        String oldRefresh = issueAndStoreRefreshToken(userId, TEST_DEVICE_ID);
 
         String rotatedRefresh = mockMvc.perform(post("/api/auth/refresh")
-                        .header("Authorization", "Bearer " + oldRefresh))
+                        .header("Authorization", "Bearer " + oldRefresh)
+                        .header("X-Device-Id", TEST_DEVICE_ID))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.refreshToken", not(isEmptyOrNullString())))
                 .andReturn()

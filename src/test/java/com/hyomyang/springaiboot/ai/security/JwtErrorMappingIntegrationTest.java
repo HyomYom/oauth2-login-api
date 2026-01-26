@@ -2,9 +2,7 @@ package com.hyomyang.springaiboot.ai.security;
 
 
 import com.hyomyang.springaiboot.ai.logger.TestLogger;
-import com.hyomyang.springaiboot.ai.security.jwt.JwtTokenProvider;
 import io.jsonwebtoken.Jwts;
-import lombok.extern.java.Log;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -9,6 +9,10 @@ server:
 
 ---
 spring:
+  data:
+    redis:
+      host: localhost
+      port: 6479
   config:
     activate:
       on-profile: dev
@@ -31,6 +35,10 @@ jwt:
 
 ---
 spring:
+  data:
+    redis:
+      host: localhost
+      port: 6479
   config:
     activate:
       on-profile: test

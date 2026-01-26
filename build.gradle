@@ -28,6 +28,22 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-web'
+    //redis
+
+    // Spring Data Redis (메인 의존성)
+    implementation("org.springframework.boot:spring-boot-starter-data-redis")
+
+    testImplementation platform('org.testcontainers:testcontainers-bom:1.20.4')
+
+    testImplementation 'org.testcontainers:testcontainers'
+    testImplementation 'org.testcontainers:junit-jupiter'
+    testImplementation 'org.testcontainers:mysql'
+
+    testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+
+    // Spring Boot Testcontainers
+    testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+
 
     //openAPI
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6'
