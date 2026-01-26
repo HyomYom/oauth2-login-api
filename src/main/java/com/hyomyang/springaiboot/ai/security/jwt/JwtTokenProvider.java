@@ -36,11 +36,13 @@ public class JwtTokenProvider {
     }
 
     public String createAccessToken(Long userId, Set<String> roles) {
+        String jti = UUID.randomUUID().toString();
         Instant now = Instant.now(clock);
         Instant exp = now.plus(jwtProps.accessTokenExpMin(), ChronoUnit.MINUTES);
 
         return Jwts.builder()
                 .subject(String.valueOf(userId)) //sub claim
+                .id(jti)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(exp))
                 .claim("type","access")
@@ -50,15 +52,16 @@ public class JwtTokenProvider {
     }
 
     public String createRefreshToken(Long userId) {
+        String jti = UUID.randomUUID().toString();
         Instant now = Instant.now(clock);
         Instant exp = now.plus(jwtProps.refreshTokenExpDays(), ChronoUnit.DAYS);
 
         return Jwts.builder()
                 .subject(String.valueOf(userId))
+                .id(jti)   // 로데이션/폐기 관리에 유용
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(exp))
                 .claim("type", "refresh")
-                .id(UUID.randomUUID().toString())   // 로데이션/폐기 관리에 유용
                 .signWith(key, Jwts.SIG.HS256)
                 .compact();
     }

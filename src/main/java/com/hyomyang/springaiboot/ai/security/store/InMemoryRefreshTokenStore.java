@@ -1,4 +1,4 @@
-package com.hyomyang.springaiboot.ai.security.refresh;
+package com.hyomyang.springaiboot.ai.security.store;
 
 import org.springframework.stereotype.Component;
 
@@ -43,9 +43,34 @@ public class InMemoryRefreshTokenStore implements RefreshTokenStore{
     }
 
     @Override
+    public void saveCurrent(Long userId, String deviceId, String jti, Instant expiresAt) {
+
+    }
+
+    @Override
+    public boolean isCurrent(Long userId, String deviceId, String jti) {
+        return false;
+    }
+
+    @Override
+    public void revokeDevice(Long userId, String deviceId) {
+
+    }
+
+    @Override
     public void revokeAll(Long userId) {
         String prefix = userId + ":";
         store.keySet().removeIf(key -> key.startsWith(prefix));
 
+    }
+
+    @Override
+    public void markRevoked(Long userId, String jti, Instant expiresAt) {
+
+    }
+
+    @Override
+    public boolean isRevoked(Long userId, String jti) {
+        return false;
     }
 }

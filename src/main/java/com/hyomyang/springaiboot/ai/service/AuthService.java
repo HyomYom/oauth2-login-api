@@ -1,12 +1,13 @@
 package com.hyomyang.springaiboot.ai.service;
 
+import com.hyomyang.springaiboot.ai.domain.User;
 import com.hyomyang.springaiboot.ai.dto.auth.LoginRequest;
 import com.hyomyang.springaiboot.ai.dto.auth.TokenPair;
 import com.hyomyang.springaiboot.ai.dto.error.ErrorCode;
 import com.hyomyang.springaiboot.ai.dto.user.UserResponse;
 import com.hyomyang.springaiboot.ai.exception.UnauthorizedException;
 import com.hyomyang.springaiboot.ai.security.jwt.JwtTokenProvider;
-import com.hyomyang.springaiboot.ai.security.refresh.RefreshTokenStore;
+import com.hyomyang.springaiboot.ai.security.store.RefreshTokenStore;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import lombok.RequiredArgsConstructor;
@@ -22,17 +23,19 @@ public class AuthService {
     private final JwtTokenProvider tokenProvider;
     private final RefreshTokenStore refreshTokenStore;
 
-    public TokenPair login(LoginRequest req){
+    public TokenPair login(String email, String password, String deviceId){
         // 추후 진짜 로그인으로 변경
-        Long userId = req.id();
-        Set<String> roles = req.roles();
+        User authenticate = userService.authenticate(email, password);
+        Long userId = authenticate.getId();
+        Set<String> roles = Set.of(authenticate.getRole());
 
         String access = tokenProvider.createAccessToken(userId, roles);
         String refresh = tokenProvider.createRefreshToken(userId);
 
         Jws<Claims> refreshJws = tokenProvider.parseToken(refresh);
-        refreshTokenStore.save(
+        refreshTokenStore.saveCurrent(
                 userId,
+                deviceId,
                 tokenProvider.getJti(refreshJws),
                 tokenProvider.getExpires(refreshJws)
         );
@@ -48,9 +51,12 @@ public class AuthService {
         return new TokenPair(accessToken, refreshToken);
     };
 
-    public TokenPair refresh(String refreshToken){
+    public TokenPair refresh(String refreshToken, String deviceId){
         if(refreshToken == null || refreshToken.isBlank()){
             throw new UnauthorizedException(ErrorCode.TOKEN_INVALID);
+        }
+        if(deviceId == null || deviceId.isBlank()){
+            throw new UnauthorizedException(ErrorCode.DEVICE_ID_REQUIRED);
         }
         Jws<Claims> jws;
 
@@ -66,32 +72,28 @@ public class AuthService {
 
         Long userId = tokenProvider.getSubject(refreshToken);
         String jti = tokenProvider.getJti(jws);
-        Instant expAt = jws.getPayload().getExpiration().toInstant();
 
-        if(!refreshTokenStore.exists(userId,jti)){
-            // 이미 폐기되었거나(로그아웃/rotation), 재사용 공격
-            refreshTokenStore.revoke(userId,jti);
+        if(!refreshTokenStore.isCurrent(userId, deviceId, jti)){
             throw new UnauthorizedException(ErrorCode.REFRESH_REVOKED_OR_REUSED);
         }
 
-        // rotation: 기존 refresh 폐기
-        refreshTokenStore.revoke(userId,jti);
-
-        // 새 refresh
+        // 새 토큰 생성
         UserResponse response = userService.getById(userId);
+
         Set<String> roles = new HashSet<>(List.of(response.role()));
+
         String newAccess = tokenProvider.createAccessToken(userId, roles);
         String newRefresh = tokenProvider.createRefreshToken(userId);
 
-        // 새 refresh 저장
         Jws<Claims> newRefreshJws = tokenProvider.parseToken(newRefresh);
-        refreshTokenStore.save(
-                userId,
-                tokenProvider.getJti(newRefreshJws),
-                tokenProvider.getExpires(newRefreshJws)
-        );
+
+        String newJti = tokenProvider.getJti(newRefreshJws);
+        Instant newExpAt = tokenProvider.getExpires(newRefreshJws);
+
+        refreshTokenStore.saveCurrent(userId, deviceId, newJti, newExpAt);
 
         return new TokenPair(newAccess, newRefresh);
+
     }
 
     public void logout(String refreshToken){

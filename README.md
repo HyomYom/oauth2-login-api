@@ -72,7 +72,43 @@
 ✅ Day 13 – JWT 인증 오류 분기 & 권한 인가 구조 정리
 - JWT 인증 필터(JwtAuthenticationFilter)에서 토큰 파싱 실패 사유를 request attribute로 기록하도록 개선
 - AuthenticationEntryPoint에서 해당 사유를 읽어 ErrorCode 기반의 표준 ErrorResponse 반환
-- 
+
 ✅ Day 14 – Role 기반 Authorization & 401/403 표준화
 - Access Token에 권한(Role)을 포함
 - Spring Security가 권한 기반으로 API 접근을 제어 설정
+
+✅ Day 15 – Logout & Token Invalidation Strategy
+- Logout API 설계 (Stateless 환경에서의 로그아웃 처리)
+- Access Token jti 기반 Redis 블랙리스트 전략 설계
+- 로그아웃 시:
+  - 현재 Access Token을 Redis에 블랙리스트로 저장 (TTL = 토큰 만료까지)
+  - 이후 동일 Access Token 요청 차단
+- JWT Filter에서 블랙리스트 토큰 검증 로직 추가
+- 로그아웃 이후 API 접근 시 401 Unauthorized 반환
+
+✅ Day 16 – Multi-Device Refresh Token Strategy (B안)
+- Refresh Token 디바이스별 관리 전략(B안) 설계
+  - X-Device-Id 헤더 기반 세션 식별
+  - 디바이스당 Refresh Token 1개만 유효
+- Redis 기반 Refresh Token Store 구현
+  - rt:cur:{userId}:{deviceId} 키 구조
+  - Refresh Token Rotation 시 기존 토큰 자동 무효화
+- 로그인 / Refresh 시 deviceId 처리 흐름 정리
+  - deviceId가 없을 경우 생성 후 응답 헤더로 반환
+- Refresh Token 재사용 / 잘못된 디바이스 접근 시 401 처리
+
+✅ Day 17 – Redis Integration & Security Flow Testing
+- Redis를 활용한 인증 상태 관리 통합
+  - Refresh Token Store
+  - Access Token Blacklist
+- Testcontainers 기반 Redis 통합 테스트 구성
+  - 테스트 실행 시 Redis 컨테이너 자동 기동
+  - 로컬 환경 의존성 제거
+- MockMvc 기반 인증 플로우 통합 테스트
+  - 로그인 → Refresh Rotation → 이전 Refresh 재사용 차단
+  - 로그아웃 → Access Token 재사용 차단
+- 인증/인가 시나리오별 테스트 케이스 정리
+  - 정상 흐름
+  - 만료 토큰
+  - 잘못된 deviceId
+    - 블랙리스트 토큰
