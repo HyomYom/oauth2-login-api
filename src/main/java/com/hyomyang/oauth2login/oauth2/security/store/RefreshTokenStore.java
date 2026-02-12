@@ -3,11 +3,11 @@ package com.hyomyang.oauth2login.oauth2.security.store;
 import java.time.Instant;
 
 public interface RefreshTokenStore {
-    void save(Long userId, String jti, Instant expiresAt);
-    boolean exists(Long userId, String jti);
-    void revoke(Long userId, String jti);
+//    void save(Long userId, String jti, Instant expiresAt);
+//    boolean exists(Long userId, String jti);
 //    void revokeAll(Long userId);
 
+    void revoke(Long userId, String jti);
     void saveCurrent(Long userId, String deviceId, String jti, Instant expiresAt);
     boolean isCurrent(Long userId, String deviceId, String jti);
     void revokeDevice(Long userId, String deviceId);         // 해당 디바이스 세션 종료

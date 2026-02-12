@@ -67,21 +67,21 @@ public class RedisRefreshTokenStore implements RefreshTokenStore {
     }
 
 
-    @Override
-    public void save(Long userId, String jti, Instant expiresAt) {
-        Duration ttl = Duration.between(Instant.now(), expiresAt);
+//    @Override
+//    public void save(Long userId, String jti, Instant expiresAt) {
+//        Duration ttl = Duration.between(Instant.now(), expiresAt);
+//
+//        if(ttl.isNegative() || ttl.isZero()) return;
+//
+//        redis.opsForValue().set(curKey(userId, jti), "1", ttl);
+//    }
 
-        if(ttl.isNegative() || ttl.isZero()) return;
-
-        redis.opsForValue().set(curKey(userId, jti), "1", ttl);
-    }
-
-    @Override
-    public boolean exists(Long userId, String jti) {
-        Boolean hasKey = redis.hasKey(curKey(userId, jti));
-
-        return Boolean.TRUE.equals(hasKey);
-    }
+//    @Override
+//    public boolean exists(Long userId, String jti) {
+//        Boolean hasKey = redis.hasKey(curKey(userId, jti));
+//
+//        return Boolean.TRUE.equals(hasKey);
+//    }
 
     @Override
     public void revoke(Long userId, String jti) {

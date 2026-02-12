@@ -42,14 +42,6 @@ public class AuthService {
 
     }
 
-    public TokenPair loginAs(Long userId, Set<String> roles, Instant refreshExpAt, String refreshToken){
-        String accessToken = tokenProvider.createAccessToken(userId, roles);
-        Jws<Claims> jws = tokenProvider.parseToken(refreshToken);
-        String jti = tokenProvider.getJti(jws);
-        refreshTokenStore.save(userId, jti, refreshExpAt);
-        return new TokenPair(accessToken, refreshToken);
-    };
-
     public TokenPair refresh(String refreshToken, String deviceId){
         if(refreshToken == null || refreshToken.isBlank()){
             throw new UnauthorizedException(ErrorCode.TOKEN_INVALID);
