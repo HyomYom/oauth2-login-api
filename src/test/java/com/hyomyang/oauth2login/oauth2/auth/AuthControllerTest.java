@@ -1,0 +1,101 @@
+package com.hyomyang.oauth2login.oauth2.auth;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hyomyang.oauth2login.oauth2.domain.User;
+import com.hyomyang.oauth2login.oauth2.logger.TestLogger;
+import com.hyomyang.oauth2login.oauth2.repository.UserRepository;
+import com.hyomyang.oauth2login.oauth2.security.jwt.JwtTokenProvider;
+import com.hyomyang.oauth2login.oauth2.security.store.RefreshTokenStore;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
+
+import java.time.Instant;
+
+import static org.hamcrest.Matchers.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+@ExtendWith(TestLogger.class)
+@ActiveProfiles("test")
+@SpringBootTest
+@AutoConfigureMockMvc
+public class AuthControllerTest {
+
+    @Autowired
+    MockMvc mockMvc;
+    @Autowired
+    ObjectMapper objectMapper;
+    @Autowired
+    JwtTokenProvider tokenProvider;
+    @Autowired
+    RefreshTokenStore refreshTokenStore;
+    @Autowired
+    UserRepository userRepository;
+
+
+    private Long userId;
+    private static final String TEST_DEVICE_ID = "test-device-123";
+
+    @BeforeEach
+    void setUp() {
+
+        User user = userRepository.findByEmail("pagooo@naver.com")
+                .orElseGet(() -> userRepository.save(new User("pagooo@naver.com", "1234", "test_user","ROLE_USER", true)));
+
+        userId = user.getId();
+    }
+
+    /**
+     * 테스트용: "유효한 refreshToken"을 발급하고 store에 저장까지 해둔다.
+     */
+    private String issueAndStoreRefreshToken(Long userId, String deviceId) throws Exception {
+        String refresh = tokenProvider.createRefreshToken(userId);
+
+        Jws<Claims> jws = tokenProvider.parseToken(refresh);
+        String jti = tokenProvider.getJti(jws);
+        Instant expAt = jws.getPayload().getExpiration().toInstant();
+
+        refreshTokenStore.saveCurrent(userId, deviceId, jti, expAt);
+        return refresh;
+    }
+
+
+    @Test
+    void refresh_shouldRotate_andReturnNewTokenPair() throws Exception {
+        String oldRefresh = issueAndStoreRefreshToken(userId, TEST_DEVICE_ID);
+
+
+        mockMvc.perform(post("/api/auth/refresh")
+                        .header("Authorization", "Bearer " + oldRefresh)
+                        .header("X-Device-Id", TEST_DEVICE_ID))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.accessToken", not(isEmptyOrNullString())))
+                .andExpect(jsonPath("$.data.refreshToken", not(isEmptyOrNullString())))
+                .andExpect(jsonPath("$.data.refreshToken", not(oldRefresh)));
+    }
+
+    @Test
+    void refresh_withReusedOldRefresh_shouldReturn401() throws Exception {
+        String oldRefresh = issueAndStoreRefreshToken(userId, TEST_DEVICE_ID);
+
+        String rotatedRefresh = mockMvc.perform(post("/api/auth/refresh")
+                        .header("Authorization", "Bearer " + oldRefresh)
+                        .header("X-Device-Id", TEST_DEVICE_ID))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.refreshToken", not(isEmptyOrNullString())))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+
+
+    }
+}

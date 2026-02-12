@@ -1,6 +1,6 @@
 spring:
   application:
-    name: spring-ai-boot
+    name: oauth2-login
   profiles:
     default: dev
 

@@ -6,7 +6,7 @@ plugins {
 
 group = 'com.hyomyang'
 version = '0.0.1-SNAPSHOT'
-description = 'spring-ai-boot'
+description = 'spring-oauth2-boot'
 
 java {
     toolchain {
