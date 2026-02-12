@@ -13,7 +13,7 @@ public record UserRequest (
         String name,
         @NotBlank(message = "{user.role.required}")
         String role,
-        @NotBlank(message = "{user.active.required}")
+//        @NotBlank(message = "{user.active.required}")
         boolean active
         ){
 

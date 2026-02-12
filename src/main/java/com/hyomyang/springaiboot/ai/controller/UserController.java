@@ -26,7 +26,7 @@ public class UserController {
             summary = "사용자 생성",
             description = "새로운 사용자를 생성하고 생성된 사용자 정보를 반환"
     )
-    @PostMapping
+    @PostMapping("/create")
     public ResponseEntity<ApiResponse<UserResponse>> create (@Valid @RequestBody UserRequest req) {
         UserResponse created = userService.create(req);
         return ResponseEntity.ok(ApiResponse.ok(created));

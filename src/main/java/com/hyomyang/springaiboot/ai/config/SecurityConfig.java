@@ -41,7 +41,8 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/actuator/health",
-                                "/api/auth/**"       // Day12에서 login/refresh/logout 들어갈 자리
+                                "/api/auth/**",       // Day12에서 login/refresh/logout 들어갈 자리
+                                "/api/users/create"       // Day12에서 login/refresh/logout 들어갈 자리
                         ).permitAll()
                         .requestMatchers("/api/secure/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
