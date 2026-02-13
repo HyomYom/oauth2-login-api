@@ -25,7 +25,7 @@ public class TestRedisConfiguration {
     @ServiceConnection(name = "redis")
     public GenericContainer<?> redisContainer() {
         return new GenericContainer<>(DockerImageName.parse("redis:7-alpine"))
-                .withExposedPorts(6479)
-                .withReuse(true);  // 여러 테스트에서 재사용
+                .withExposedPorts(6379);
+//                .withReuse(true);  // 여러 테스트에서 재사용
     }
 }
