@@ -2,6 +2,7 @@ package com.hyomyang.oauth2login.oauth2.auth;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hyomyang.oauth2login.oauth2.config.TestRedisConfiguration;
 import com.hyomyang.oauth2login.oauth2.domain.User;
 import com.hyomyang.oauth2login.oauth2.logger.TestLogger;
 import com.hyomyang.oauth2login.oauth2.repository.UserRepository;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -25,6 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@Import(TestRedisConfiguration.class)
 @ExtendWith(TestLogger.class)
 @ActiveProfiles("test")
 @SpringBootTest
