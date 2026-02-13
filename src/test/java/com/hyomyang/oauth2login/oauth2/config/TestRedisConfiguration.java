@@ -10,8 +10,8 @@ import org.testcontainers.utility.DockerImageName;
 /**
  * Redis Testcontainer 설정
  *
- * ⭐ Testcontainers에는 독립적인 'redis' 모듈이 없습니다!
- * GenericContainer를 사용해서 Redis 컨테이너를 생성합니다.
+ * Testcontainers에는 독립적인 'redis' 모듈이 없다
+ * GenericContainer를 사용해서 Redis 컨테이너를 생성
  */
 @TestConfiguration(proxyBeanMethods = false)
 public class TestRedisConfiguration {

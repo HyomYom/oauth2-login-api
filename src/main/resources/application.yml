@@ -2,7 +2,7 @@ spring:
   application:
     name: oauth2-login
   profiles:
-    default: dev
+    default: test
 
 server:
   port: 8080
@@ -52,7 +52,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create-drop
     properties:
       hibernate.format_sql: true
       hibernate.jdbc.time_zone: UTC

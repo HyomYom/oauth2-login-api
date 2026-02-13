@@ -28,7 +28,6 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-web'
-    //redis
 
     // Spring Data Redis (메인 의존성)
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
@@ -64,7 +63,9 @@ dependencies {
     runtimeOnly 'com.mysql:mysql-connector-j'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
     testImplementation 'com.h2database:h2'
+    runtimeOnly 'com.h2database:h2' // 이 라인을 추가하세요
 
 }
 
